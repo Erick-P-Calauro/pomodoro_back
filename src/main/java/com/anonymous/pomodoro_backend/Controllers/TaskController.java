@@ -23,6 +23,7 @@ import com.anonymous.pomodoro_backend.Models.Task;
 import com.anonymous.pomodoro_backend.Models.Dtos.TaskCreate;
 import com.anonymous.pomodoro_backend.Models.Dtos.TaskEdit;
 import com.anonymous.pomodoro_backend.Models.Dtos.TaskResponse;
+import com.anonymous.pomodoro_backend.Models.Dtos.TimeInfoResponse;
 import com.anonymous.pomodoro_backend.Models.Mappers.TaskMapper;
 import com.anonymous.pomodoro_backend.Services.TaskService;
 import jakarta.validation.Valid;
@@ -101,12 +102,12 @@ public class TaskController {
         return ResponseEntity.accepted().body("Tarefa deletada com sucesso");
     }
 
-    // TODO : Se houver muito delay no tempo usar Date e Time recebidos no request
     @GetMapping("/addproductivity/{id}") 
-    public ResponseEntity<String> addProcutivity(@PathVariable("id") UUID id) throws TaskNotFoundException {
-        
+    public ResponseEntity<Object> addProcutivity(@PathVariable("id") UUID id, 
+        @ModelAttribute("duration") int duration, BindingResult result) throws TaskNotFoundException {
+
         taskService.addProductivityDone(id);
-        taskService.addTaskDate(Date.valueOf(LocalDate.now()), Time.valueOf(LocalTime.now()), id);
+        taskService.addTaskDate(Date.valueOf(LocalDate.now()), Time.valueOf(LocalTime.now()), duration, id);
 
         Task task = taskService.getTask(id);
 
@@ -115,6 +116,14 @@ public class TaskController {
         }
 
         return ResponseEntity.accepted().body("Sessão de produtividade adicionada com sucesso.");
+    }
+
+    @GetMapping("/focus/hours/{id}")
+    public ResponseEntity<TimeInfoResponse> getHoursFocused(@PathVariable("id") UUID id) throws TaskNotFoundException {
+        Float hours = taskService.getHoursFocused(id);
+        Integer days = taskService.getDaysFocused(id);
+
+        return ResponseEntity.accepted().body(new TimeInfoResponse(days, hours));
     }
 
 

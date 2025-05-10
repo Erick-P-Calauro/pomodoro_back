@@ -30,7 +30,10 @@ public class TaskDate {
     private Date date;
 
     @NotNull
-    private Time time;
+    private Time time; // End Time
+
+    @NotNull
+    private int duration;
 
     @ManyToOne
     @JoinColumn(name="task")

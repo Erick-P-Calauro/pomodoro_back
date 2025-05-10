@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.anonymous.pomodoro_backend.Errors.TaskNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Task;
 import com.anonymous.pomodoro_backend.Models.TaskDate;
@@ -52,13 +51,14 @@ public class TaskService {
         taskRepository.deleteById(id);
     }
 
-    public TaskDate addTaskDate(Date date, Time time, UUID taskId) throws TaskNotFoundException {
+    public TaskDate addTaskDate(Date date, Time time, int duration, UUID taskId) throws TaskNotFoundException {
          
         Task task = getTask(taskId);
         
         TaskDate taskDate = new TaskDate();
         taskDate.setDate(date);
         taskDate.setTime(time);
+        taskDate.setDuration(duration);
         taskDate.setTask(task);
 
         taskDate = taskDateService.saveTaskDate(taskDate);
@@ -89,12 +89,40 @@ public class TaskService {
         return taskDateService.getTaskDateByTask(task);
     }
 
-    public float getHoursFocused(UUID id) {
-        return 0.0f;
+    public float getHoursFocused(UUID id) throws TaskNotFoundException {
+        List<TaskDate> tasksDate = getAllTaskDate(id);
+
+        float hoursFocused = 0.0f;
+        for(int i = 0; i < tasksDate.size(); i++) {
+            TaskDate task = tasksDate.get(i);
+
+            hoursFocused += task.getDuration();
+        }
+
+        return hoursFocused;
     }
 
-    public int getDaysFocused(UUID id) {
-        return 0;
+    public int getDaysFocused(UUID id) throws TaskNotFoundException {
+        List<TaskDate> tasksDate = getAllTaskDate(id);
+
+        int daysFocused = 0;
+        int i = 0;
+
+        if(tasksDate.size() == 1) {
+            daysFocused = 1;
+        }else if(tasksDate.size() > 1) {
+            daysFocused = 1;
+
+            for(int j = 0; j < tasksDate.size(); j++) {
+                // Quando achar um diferente quer dizer que teve mais um dia de foco
+                if(!(tasksDate.get(i).getDate().equals(tasksDate.get(j).getDate()))) {
+                    i = j;
+                    daysFocused += 1;
+                }
+            }
+        }
+
+        return daysFocused;
     }
     
 }
