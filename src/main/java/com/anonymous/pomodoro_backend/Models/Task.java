@@ -2,6 +2,8 @@ package com.anonymous.pomodoro_backend.Models;
 
 import java.util.List;
 import java.util.UUID;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,12 +41,12 @@ public class Task {
     private int productivityGoal;
 
     @NotNull
-    private boolean active = false;
+    private boolean active;
 
     @ManyToOne
     @JoinColumn(name="project")
     private Project project;
 
-    @OneToMany(mappedBy="task")
+    @OneToMany(mappedBy="task", cascade = CascadeType.ALL)
     private List<TaskDate> taskDates;
 }
