@@ -1,34 +1,39 @@
 package com.anonymous.pomodoro_backend.Models;
 
-import java.util.List;
+import java.sql.Time;
+import java.util.Date;
 import java.util.UUID;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Setter
 @Getter
-@NoArgsConstructor
+@Setter
 @AllArgsConstructor
-public class Project {
-
+@NoArgsConstructor
+public class TaskDate {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotBlank
-    private String name;
+    @NotNull
+    private Date date;
 
-    @OneToMany(mappedBy="project", cascade = CascadeType.DETACH)
-    List<Task> tasks;
-    
+    @NotNull
+    private Time time;
+
+    @ManyToOne
+    @JoinColumn(name="task")
+    private Task task;
+
 }
