@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.anonymous.pomodoro_backend.Errors.InputNotValidException;
 import com.anonymous.pomodoro_backend.Errors.TaskNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Task;
 import com.anonymous.pomodoro_backend.Models.Dtos.TaskCreate;
@@ -26,6 +27,8 @@ import com.anonymous.pomodoro_backend.Models.Dtos.TaskResponse;
 import com.anonymous.pomodoro_backend.Models.Dtos.TimeInfoResponse;
 import com.anonymous.pomodoro_backend.Models.Mappers.TaskMapper;
 import com.anonymous.pomodoro_backend.Services.TaskService;
+import com.anonymous.pomodoro_backend.utils.ErrorUtils;
+
 import jakarta.validation.Valid;
 
 @RestController
@@ -54,17 +57,14 @@ public class TaskController {
     
     @PostMapping("/save")
     public ResponseEntity<Object> saveTask(@ModelAttribute("task") @Valid TaskCreate taskCreate, 
-        BindingResult result) {
+        BindingResult result) throws InputNotValidException {
 
             if(result.hasErrors()) {
-
-                List<String> errors = result.getAllErrors()
-                                .stream()
-                                .map(error -> error.getDefaultMessage())
-                                .toList();
-
-                return ResponseEntity.badRequest().body(errors);
-            } // TODO : Melhorar formato do retorno do erro.
+                List<ObjectError> errors = result.getAllErrors();
+                String errorText = ErrorUtils.generateErrorMessage(errors);
+                
+                throw new InputNotValidException(errorText);
+            }
 
             Task task = TaskMapper.toEntity(taskCreate);
             task = taskService.saveTask(task);
@@ -75,17 +75,14 @@ public class TaskController {
 
     @PutMapping("/edit/{id}")
     public ResponseEntity<Object> editTask(@PathVariable("id") UUID id, 
-        @ModelAttribute @Valid TaskEdit taskEdit, BindingResult result) {
+        @ModelAttribute @Valid TaskEdit taskEdit, BindingResult result) throws InputNotValidException {
 
             if(result.hasErrors()) {
+                List<ObjectError> errors = result.getAllErrors();
+                String errorText = ErrorUtils.generateErrorMessage(errors);
 
-                List<String> errors = result.getAllErrors()
-                                .stream()
-                                .map(error -> error.getDefaultMessage())
-                                .toList();
-
-                return ResponseEntity.badRequest().body(errors);
-            } // TODO : Melhorar formato do retorno do erro.
+                throw new InputNotValidException(errorText);
+            }
 
             Task task = TaskMapper.toEntity(taskEdit);
             task = taskService.editTask(id, task);
@@ -102,7 +99,7 @@ public class TaskController {
         return ResponseEntity.accepted().body("Tarefa deletada com sucesso");
     }
 
-    @GetMapping("/addproductivity/{id}") 
+    @GetMapping("/add/productivity/{id}") 
     public ResponseEntity<Object> addProcutivity(@PathVariable("id") UUID id, 
         @ModelAttribute("duration") int duration, BindingResult result) throws TaskNotFoundException {
 
@@ -118,7 +115,7 @@ public class TaskController {
         return ResponseEntity.accepted().body("Sessão de produtividade adicionada com sucesso.");
     }
 
-    @GetMapping("/focus/hours/{id}")
+    @GetMapping("/focus/{id}")
     public ResponseEntity<TimeInfoResponse> getHoursFocused(@PathVariable("id") UUID id) throws TaskNotFoundException {
         Float hours = taskService.getHoursFocused(id);
         Integer days = taskService.getDaysFocused(id);
