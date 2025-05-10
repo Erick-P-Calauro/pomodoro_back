@@ -1,11 +1,9 @@
 package com.anonymous.pomodoro_backend.Services;
 
 import java.sql.Time;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.anonymous.pomodoro_backend.Models.Task;
@@ -21,23 +19,29 @@ public class TaskService {
     TaskDateService taskDateService;
 
     public Task saveTask(Task task) {
-        return new Task();
+        return taskRepository.save(task);
     }
 
     public Task getTask(UUID id) {
-        return new Task();
+        Task task = taskRepository.getReferenceById(id);
+
+        return task;
     }
 
     public List<Task> listTasks() {
-        return new ArrayList<Task>();
+        List<Task> tasks = taskRepository.findAll();
+
+        return tasks;
     }
 
     public Task editTask(UUID id, Task newTask) {
-        return new Task();
+        newTask.setId(id);
+        
+        return taskRepository.save(newTask);
     }
 
     public void deleteTask(UUID id) {
-
+        taskRepository.deleteById(id);
     }
 
     public void addTaskDate(Date date, Time time, UUID taskId) {
@@ -61,7 +65,7 @@ public class TaskService {
     }
 
     public void getAllTaskDate(UUID id) {
-        
+
     }
     
 }
