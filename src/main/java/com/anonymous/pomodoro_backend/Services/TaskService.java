@@ -3,10 +3,14 @@ package com.anonymous.pomodoro_backend.Services;
 import java.sql.Time;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.anonymous.pomodoro_backend.Errors.TaskNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Task;
+import com.anonymous.pomodoro_backend.Models.TaskDate;
 import com.anonymous.pomodoro_backend.Repositories.TaskRepository;
 
 @Service
@@ -22,10 +26,14 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
-    public Task getTask(UUID id) {
-        Task task = taskRepository.getReferenceById(id);
+    public Task getTask(UUID id) throws TaskNotFoundException {
+        Optional<Task> task = taskRepository.findById(id);
 
-        return task;
+        if(task.isEmpty()){
+            throw new TaskNotFoundException(id);
+        }
+
+        return task.get();
     }
 
     public List<Task> listTasks() {
@@ -44,16 +52,41 @@ public class TaskService {
         taskRepository.deleteById(id);
     }
 
-    public void addTaskDate(Date date, Time time, UUID taskId) {
+    public TaskDate addTaskDate(Date date, Time time, UUID taskId) throws TaskNotFoundException {
          
+        Task task = getTask(taskId);
+        
+        TaskDate taskDate = new TaskDate();
+        taskDate.setDate(date);
+        taskDate.setTime(time);
+        taskDate.setTask(task);
+
+        taskDate = taskDateService.saveTaskDate(taskDate);
+
+        return taskDate;
     }
 
-    public void deactivateTask(UUID id) {
+    public Task deactivateTask(UUID id) throws TaskNotFoundException {
 
+        Task task = getTask(id);
+        task.setActive(false);
+
+        taskRepository.save(task);
+
+        return task;
     }
 
-    public void addProductivityDone(UUID id) {
+    public Task addProductivityDone(UUID id) throws TaskNotFoundException {
+        Task task = getTask(id);
+        task.setProductivityDone(task.getProductivityDone() + 1);
 
+        return taskRepository.save(task);
+    }
+
+    public List<TaskDate> getAllTaskDate(UUID id) throws TaskNotFoundException {
+        Task task = getTask(id);
+
+        return taskDateService.getTaskDateByTask(task);
     }
 
     public float getHoursFocused(UUID id) {
@@ -62,10 +95,6 @@ public class TaskService {
 
     public int getDaysFocused(UUID id) {
         return 0;
-    }
-
-    public void getAllTaskDate(UUID id) {
-
     }
     
 }

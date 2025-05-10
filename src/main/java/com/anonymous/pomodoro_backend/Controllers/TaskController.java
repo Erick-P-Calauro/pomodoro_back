@@ -1,5 +1,9 @@
 package com.anonymous.pomodoro_backend.Controllers;
 
+import java.sql.Date;
+import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.anonymous.pomodoro_backend.Errors.TaskNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Task;
 import com.anonymous.pomodoro_backend.Models.Dtos.TaskCreate;
 import com.anonymous.pomodoro_backend.Models.Dtos.TaskEdit;
@@ -37,7 +43,7 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TaskResponse> getTaskById(@PathVariable("id") UUID id) {
+    public ResponseEntity<TaskResponse> getTaskById(@PathVariable("id") UUID id) throws TaskNotFoundException {
 
         Task task = taskService.getTask(id);
         TaskResponse taskResponse = TaskMapper.toResponse(task);
@@ -93,6 +99,22 @@ public class TaskController {
         taskService.deleteTask(id);
 
         return ResponseEntity.accepted().body("Tarefa deletada com sucesso");
+    }
+
+    // TODO : Se houver muito delay no tempo usar Date e Time recebidos no request
+    @GetMapping("/addproductivity/{id}") 
+    public ResponseEntity<String> addProcutivity(@PathVariable("id") UUID id) throws TaskNotFoundException {
+        
+        taskService.addProductivityDone(id);
+        taskService.addTaskDate(Date.valueOf(LocalDate.now()), Time.valueOf(LocalTime.now()), id);
+
+        Task task = taskService.getTask(id);
+
+        if(task.getProductivityDone() == task.getProductivityGoal()) {
+            taskService.deactivateTask(id);
+        }
+
+        return ResponseEntity.accepted().body("Sessão de produtividade adicionada com sucesso.");
     }
 
 
