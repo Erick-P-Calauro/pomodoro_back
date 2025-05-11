@@ -99,7 +99,7 @@ public class TaskService {
             hoursFocused += task.getDuration();
         }
 
-        return hoursFocused;
+        return hoursFocused/60;
     }
 
     public int getDaysFocused(UUID id) throws TaskNotFoundException {

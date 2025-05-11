@@ -12,15 +12,16 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.anonymous.pomodoro_backend.Errors.InputNotValidException;
 import com.anonymous.pomodoro_backend.Errors.TaskNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Task;
+import com.anonymous.pomodoro_backend.Models.Dtos.ProductivityRequest;
 import com.anonymous.pomodoro_backend.Models.Dtos.TaskCreate;
 import com.anonymous.pomodoro_backend.Models.Dtos.TaskEdit;
 import com.anonymous.pomodoro_backend.Models.Dtos.TaskResponse;
@@ -43,7 +44,7 @@ public class TaskController {
         List<Task> tasks = taskService.listTasks();
         List<TaskResponse> tasksResponse = TaskMapper.toListResponse(tasks);
 
-        return ResponseEntity.accepted().body(tasksResponse);
+        return ResponseEntity.ok(tasksResponse);
     }
 
     @GetMapping("/{id}")
@@ -52,11 +53,11 @@ public class TaskController {
         Task task = taskService.getTask(id);
         TaskResponse taskResponse = TaskMapper.toResponse(task);
 
-        return ResponseEntity.accepted().body(taskResponse);
+        return ResponseEntity.ok(taskResponse);
     }
     
     @PostMapping("/save")
-    public ResponseEntity<Object> saveTask(@ModelAttribute("task") @Valid TaskCreate taskCreate, 
+    public ResponseEntity<TaskResponse> saveTask(@RequestBody @Valid TaskCreate taskCreate, 
         BindingResult result) throws InputNotValidException {
 
             if(result.hasErrors()) {
@@ -70,12 +71,12 @@ public class TaskController {
             task = taskService.saveTask(task);
             TaskResponse taskResponse = TaskMapper.toResponse(task);
 
-            return ResponseEntity.accepted().body(taskResponse);
+            return ResponseEntity.ok(taskResponse);
     }
 
     @PutMapping("/edit/{id}")
-    public ResponseEntity<Object> editTask(@PathVariable("id") UUID id, 
-        @ModelAttribute @Valid TaskEdit taskEdit, BindingResult result) throws InputNotValidException {
+    public ResponseEntity<TaskResponse> editTask(@PathVariable("id") UUID id, 
+        @RequestBody @Valid TaskEdit taskEdit, BindingResult result) throws InputNotValidException {
 
             if(result.hasErrors()) {
                 List<ObjectError> errors = result.getAllErrors();
@@ -88,7 +89,7 @@ public class TaskController {
             task = taskService.editTask(id, task);
             TaskResponse taskResponse = TaskMapper.toResponse(task);
 
-            return ResponseEntity.accepted().body(taskResponse);
+            return ResponseEntity.ok(taskResponse);
 
     }
 
@@ -96,15 +97,15 @@ public class TaskController {
     public ResponseEntity<String> deleteTask(@PathVariable("id") UUID id) {
         taskService.deleteTask(id);
 
-        return ResponseEntity.accepted().body("Tarefa deletada com sucesso");
+        return ResponseEntity.ok("Tarefa deletada com sucesso");
     }
 
-    @GetMapping("/add/productivity/{id}") 
-    public ResponseEntity<Object> addProcutivity(@PathVariable("id") UUID id, 
-        @ModelAttribute("duration") int duration, BindingResult result) throws TaskNotFoundException {
+    @GetMapping("/productivity/{id}") 
+    public ResponseEntity<String> addProcutivity(@PathVariable("id") UUID id, @RequestBody ProductivityRequest request, 
+        BindingResult result) throws TaskNotFoundException {
 
         taskService.addProductivityDone(id);
-        taskService.addTaskDate(Date.valueOf(LocalDate.now()), Time.valueOf(LocalTime.now()), duration, id);
+        taskService.addTaskDate(Date.valueOf(LocalDate.now()), Time.valueOf(LocalTime.now()), request.getMinutes(), id);
 
         Task task = taskService.getTask(id);
 
@@ -112,7 +113,7 @@ public class TaskController {
             taskService.deactivateTask(id);
         }
 
-        return ResponseEntity.accepted().body("Sessão de produtividade adicionada com sucesso.");
+        return ResponseEntity.ok("Sessão de produtividade adicionada com sucesso.");
     }
 
     @GetMapping("/focus/{id}")
@@ -120,7 +121,7 @@ public class TaskController {
         Float hours = taskService.getHoursFocused(id);
         Integer days = taskService.getDaysFocused(id);
 
-        return ResponseEntity.accepted().body(new TimeInfoResponse(days, hours));
+        return ResponseEntity.ok(new TimeInfoResponse(days, hours));
     }
 
 
