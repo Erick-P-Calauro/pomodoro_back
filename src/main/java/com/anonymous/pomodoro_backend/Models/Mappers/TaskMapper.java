@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import com.anonymous.pomodoro_backend.Models.Task;
 import com.anonymous.pomodoro_backend.Models.TaskDate;
-import com.anonymous.pomodoro_backend.Models.Dtos.TaskCreate;
-import com.anonymous.pomodoro_backend.Models.Dtos.TaskEdit;
-import com.anonymous.pomodoro_backend.Models.Dtos.TaskResponse;
+import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskCreate;
+import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskEdit;
+import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskResponse;
 
 public class TaskMapper {
 

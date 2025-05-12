@@ -22,13 +22,13 @@ import com.anonymous.pomodoro_backend.Errors.InputNotValidException;
 import com.anonymous.pomodoro_backend.Errors.TaskNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Task;
 import com.anonymous.pomodoro_backend.Models.Dtos.ProductivityRequest;
-import com.anonymous.pomodoro_backend.Models.Dtos.TaskCreate;
-import com.anonymous.pomodoro_backend.Models.Dtos.TaskEdit;
-import com.anonymous.pomodoro_backend.Models.Dtos.TaskResponse;
 import com.anonymous.pomodoro_backend.Models.Dtos.TimeInfoResponse;
+import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskCreate;
+import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskEdit;
+import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskResponse;
 import com.anonymous.pomodoro_backend.Models.Mappers.TaskMapper;
 import com.anonymous.pomodoro_backend.Services.TaskService;
-import com.anonymous.pomodoro_backend.utils.ErrorUtils;
+import com.anonymous.pomodoro_backend.Utils.ErrorUtils;
 
 import jakarta.validation.Valid;
 

@@ -1,4 +1,4 @@
-package com.anonymous.pomodoro_backend.Models.Dtos;
+package com.anonymous.pomodoro_backend.Models.Dtos.Task;
 
 import java.util.UUID;
 

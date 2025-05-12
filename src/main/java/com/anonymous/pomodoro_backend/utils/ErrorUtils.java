@@ -1,4 +1,4 @@
-package com.anonymous.pomodoro_backend.utils;
+package com.anonymous.pomodoro_backend.Utils;
 
 import java.util.List;
 
