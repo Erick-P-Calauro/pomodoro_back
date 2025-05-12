@@ -1,10 +1,16 @@
 package com.anonymous.pomodoro_backend.Controllers;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +25,7 @@ import com.anonymous.pomodoro_backend.Errors.InputNotValidException;
 import com.anonymous.pomodoro_backend.Errors.UserNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Role;
 import com.anonymous.pomodoro_backend.Models.User;
+import com.anonymous.pomodoro_backend.Models.Dtos.LoginResponse;
 import com.anonymous.pomodoro_backend.Models.Dtos.User.UserCreate;
 import com.anonymous.pomodoro_backend.Models.Dtos.User.UserEdit;
 import com.anonymous.pomodoro_backend.Models.Dtos.User.UserResponse;
@@ -38,6 +45,39 @@ public class UserController {
 
     @Autowired
     RoleService roleService;
+
+    @Autowired
+    JwtEncoder tokenEncoder;
+
+    @Autowired
+    BCryptPasswordEncoder passwordEncoder;
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> loginUser(@RequestBody UserCreate userLogin) throws UserNotFoundException {
+        
+        User user = userService.getUserByUsername(userLogin.getUsername());
+
+        if(!(passwordEncoder.matches(userLogin.getPassword(), user.getPassword()))) {
+            throw new BadCredentialsException("username or password invalid.");
+        }
+
+        final Instant nowInstant = Instant.now();
+        final Long expiresIn = 600L; 
+
+        final String scope = user.getRoles().stream().map(role -> role.getName()).collect(Collectors.joining(" "));
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+            .issuer("pomodoro_backend")
+            .subject(user.getId().toString())
+            .issuedAt(nowInstant)
+            .expiresAt(nowInstant.plusSeconds(expiresIn))
+            .claim("scope", scope)
+            .build();
+        
+        String jwtValue = tokenEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+        return ResponseEntity.ok(new LoginResponse(jwtValue, expiresIn));
+    }
 
     @GetMapping
     public ResponseEntity<List<UserResponse>> listUsers() {
@@ -68,6 +108,9 @@ public class UserController {
 
         // 2L => ROLE USER (RolesConfiguration.java)
         Role userRole = roleService.getRole(2L);
+        
+        // Cryptography to user password
+        userCreate.setPassword(passwordEncoder.encode(userCreate.getPassword()));
 
         User user = UserMapper.toEntity(userCreate, userRole);
         user = userService.saveUser(user);

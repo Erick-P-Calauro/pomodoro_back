@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.anonymous.pomodoro_backend.Models.Role;
@@ -23,6 +24,9 @@ public class RolesConfiguration implements CommandLineRunner {
     @Autowired
     UserService userService;
 
+    @Autowired
+    BCryptPasswordEncoder passwordEncoder;
+
     @Override
     public void run(String... args) throws Exception {
         
@@ -35,7 +39,7 @@ public class RolesConfiguration implements CommandLineRunner {
 
             User ADMIN_USER = new User();
             ADMIN_USER.setUsername("admin");
-            ADMIN_USER.setPassword("admin");
+            ADMIN_USER.setPassword(passwordEncoder.encode("admin"));
             
             ArrayList<Role> roles = new ArrayList<Role>();
             roles.add(ADMIN_ROLE);
