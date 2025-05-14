@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,9 @@ public class Project {
     private String name;
 
     @OneToMany(mappedBy="project", cascade = CascadeType.DETACH)
-    List<Task> tasks;
+    private List<Task> tasks;
+
+    @ManyToOne
+    private User user;
     
 }

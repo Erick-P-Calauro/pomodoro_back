@@ -49,4 +49,7 @@ public class Task {
 
     @OneToMany(mappedBy="task", cascade = CascadeType.ALL)
     private List<TaskDate> taskDates;
+
+    @ManyToOne
+    private User user;
 }

@@ -3,6 +3,7 @@ package com.anonymous.pomodoro_backend.Models;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -12,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -43,6 +45,12 @@ public class User {
         name="user_roles", 
         joinColumns = @JoinColumn(name="user_id"), 
         inverseJoinColumns = @JoinColumn(name="role_id"))
-    List<Role> roles;
+    private List<Role> roles;
+
+    @OneToMany(mappedBy="user", cascade = CascadeType.ALL)
+    private List<Task> tasks;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Project> projects;
 
 }

@@ -7,7 +7,10 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,9 +21,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import com.anonymous.pomodoro_backend.Errors.InputNotValidException;
 import com.anonymous.pomodoro_backend.Errors.TaskNotFoundException;
+import com.anonymous.pomodoro_backend.Errors.UserNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Task;
+import com.anonymous.pomodoro_backend.Models.User;
 import com.anonymous.pomodoro_backend.Models.Dtos.ProductivityRequest;
 import com.anonymous.pomodoro_backend.Models.Dtos.TimeInfoResponse;
 import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskCreate;
@@ -28,8 +34,8 @@ import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskEdit;
 import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskResponse;
 import com.anonymous.pomodoro_backend.Models.Mappers.TaskMapper;
 import com.anonymous.pomodoro_backend.Services.TaskService;
+import com.anonymous.pomodoro_backend.Services.UserService;
 import com.anonymous.pomodoro_backend.Utils.ErrorUtils;
-
 import jakarta.validation.Valid;
 
 @RestController
@@ -39,7 +45,11 @@ public class TaskController {
     @Autowired
     TaskService taskService;
 
+    @Autowired
+    UserService userService;
+
     @GetMapping("/")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<List<TaskResponse>> listTasks() {
         List<Task> tasks = taskService.listTasks();
         List<TaskResponse> tasksResponse = TaskMapper.toListResponse(tasks);
@@ -48,9 +58,17 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TaskResponse> getTaskById(@PathVariable("id") UUID id) throws TaskNotFoundException {
+    public ResponseEntity<TaskResponse> getTaskById(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws TaskNotFoundException, UserNotFoundException {
+
+        UUID subjectId = UUID.fromString(token.getName());
+        User user = userService.getUser(subjectId);
 
         Task task = taskService.getTask(id);
+
+        if(!(task.getUser().getId().equals(subjectId)) && !user.getUsername().equals("admin")) { // Se token.id diferente de Task.user.id
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
         TaskResponse taskResponse = TaskMapper.toResponse(task);
 
         return ResponseEntity.ok(taskResponse);
@@ -58,25 +76,30 @@ public class TaskController {
     
     @PostMapping("/save")
     public ResponseEntity<TaskResponse> saveTask(@RequestBody @Valid TaskCreate taskCreate, 
-        BindingResult result) throws InputNotValidException {
+        BindingResult result, JwtAuthenticationToken token) throws InputNotValidException, UserNotFoundException {
 
-            if(result.hasErrors()) {
-                List<ObjectError> errors = result.getAllErrors();
-                String errorText = ErrorUtils.generateErrorMessage(errors);
-                
-                throw new InputNotValidException(errorText);
-            }
+        if(result.hasErrors()) {
+            List<ObjectError> errors = result.getAllErrors();
+            String errorText = ErrorUtils.generateErrorMessage(errors);
+            
+            throw new InputNotValidException(errorText);
+        }
 
-            Task task = TaskMapper.toEntity(taskCreate);
-            task = taskService.saveTask(task);
-            TaskResponse taskResponse = TaskMapper.toResponse(task);
+        UUID subjectId = UUID.fromString(token.getName());
+        User subject = userService.getUser(subjectId);
 
-            return ResponseEntity.ok(taskResponse);
+        Task task = TaskMapper.toEntity(taskCreate);
+        task.setUser(subject);
+        
+        task = taskService.saveTask(task);
+        TaskResponse taskResponse = TaskMapper.toResponse(task);
+
+        return ResponseEntity.ok(taskResponse);
     }
 
     @PutMapping("/edit/{id}")
     public ResponseEntity<TaskResponse> editTask(@PathVariable("id") UUID id, 
-        @RequestBody @Valid TaskEdit taskEdit, BindingResult result) throws InputNotValidException {
+        @RequestBody @Valid TaskEdit taskEdit, BindingResult result, JwtAuthenticationToken token) throws InputNotValidException, UserNotFoundException, TaskNotFoundException {
 
             if(result.hasErrors()) {
                 List<ObjectError> errors = result.getAllErrors();
@@ -85,7 +108,17 @@ public class TaskController {
                 throw new InputNotValidException(errorText);
             }
 
+            UUID subjectId = UUID.fromString(token.getName());
+            User user = userService.getUser(subjectId);
+            Task oldTask = taskService.getTask(id);
+
+            if(!(oldTask.getUser().getId().equals(subjectId)) && !user.getUsername().equals("admin")) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+
             Task task = TaskMapper.toEntity(taskEdit);
+            task.setUser(user);
+
             task = taskService.editTask(id, task);
             TaskResponse taskResponse = TaskMapper.toResponse(task);
 
@@ -94,7 +127,15 @@ public class TaskController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteTask(@PathVariable("id") UUID id) {
+    public ResponseEntity<String> deleteTask(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws UserNotFoundException, TaskNotFoundException {
+        UUID subjectId = UUID.fromString(token.getName());
+        User user = userService.getUser(subjectId);
+        Task task = taskService.getTask(id);
+
+        if(!(task.getUser().getId().equals(subjectId)) && !user.getUsername().equals("admin")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        
         taskService.deleteTask(id);
 
         return ResponseEntity.ok("Tarefa deletada com sucesso");
@@ -102,12 +143,20 @@ public class TaskController {
 
     @GetMapping("/productivity/{id}") 
     public ResponseEntity<String> addProcutivity(@PathVariable("id") UUID id, @RequestBody ProductivityRequest request, 
-        BindingResult result) throws TaskNotFoundException {
+        BindingResult result, JwtAuthenticationToken token) throws TaskNotFoundException, UserNotFoundException {
+
+        UUID subjectId = UUID.fromString(token.getName());
+        User user = userService.getUser(subjectId);
+        Task task = taskService.getTask(id);
+
+        if(!(task.getUser().getId().equals(subjectId)) && !user.getUsername().equals("admin")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
 
         taskService.addProductivityDone(id);
         taskService.addTaskDate(Date.valueOf(LocalDate.now()), Time.valueOf(LocalTime.now()), request.getMinutes(), id);
 
-        Task task = taskService.getTask(id);
+        task = taskService.getTask(id);
 
         if(task.getProductivityDone() == task.getProductivityGoal()) {
             taskService.deactivateTask(id);
@@ -117,7 +166,16 @@ public class TaskController {
     }
 
     @GetMapping("/focus/{id}")
-    public ResponseEntity<TimeInfoResponse> getHoursFocused(@PathVariable("id") UUID id) throws TaskNotFoundException {
+    public ResponseEntity<TimeInfoResponse> getHoursFocused(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws TaskNotFoundException, UserNotFoundException {
+        
+        UUID subjectId = UUID.fromString(token.getName());
+        User user = userService.getUser(subjectId);
+        Task task = taskService.getTask(id);
+
+        if(!(task.getUser().getId().equals(subjectId)) && !user.getUsername().equals("admin")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
         Float hours = taskService.getHoursFocused(id);
         Integer days = taskService.getDaysFocused(id);
 

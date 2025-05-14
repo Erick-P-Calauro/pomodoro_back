@@ -45,6 +45,7 @@ public class TaskMapper {
         taskResponse.setProductivityGoal(task.getProductivityGoal());
         taskResponse.setProductivityDone(task.getProductivityDone());
         taskResponse.setActive(task.isActive());
+        taskResponse.setOwner(UserMapper.toResponse(task.getUser()));
 
         return taskResponse;
     }
