@@ -6,11 +6,13 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -80,6 +82,7 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<List<UserResponse>> listUsers() {
         List<User> users = userService.listUsers();
         List<UserResponse> usersResponse = UserMapper.toListResponse(users);
@@ -88,6 +91,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<UserResponse> getUser(@PathVariable("id") UUID id) throws UserNotFoundException {
 
         User user = userService.getUser(id);
@@ -96,6 +100,18 @@ public class UserController {
         return ResponseEntity.ok(userResponse);
     }
 
+    @GetMapping("/get")
+    public ResponseEntity<UserResponse> getUserByToken(JwtAuthenticationToken token) throws UserNotFoundException {
+
+        UUID subjectId = UUID.fromString(token.getName());
+
+        User user = userService.getUser(subjectId);
+        UserResponse userResponse = UserMapper.toResponse(user);
+
+        return ResponseEntity.ok(userResponse);
+    }
+
+    // Salvar usuário é livre
     @PostMapping("/save")
     public ResponseEntity<UserResponse> saveUser(@RequestBody @Valid UserCreate userCreate, BindingResult result) throws InputNotValidException {
 
@@ -120,7 +136,9 @@ public class UserController {
     }
 
     @PutMapping("/edit/{id}")
-    public ResponseEntity<UserResponse> editUser(@PathVariable("id") UUID id, @RequestBody @Valid UserEdit userEdit, BindingResult result) throws InputNotValidException, UserNotFoundException {
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    public ResponseEntity<UserResponse> editUser(@PathVariable("id") UUID id, @RequestBody @Valid UserEdit userEdit, 
+        BindingResult result, JwtAuthenticationToken token) throws InputNotValidException, UserNotFoundException {
         
         if(result.hasErrors()) {
             List<ObjectError> errors = result.getAllErrors();
@@ -139,7 +157,31 @@ public class UserController {
         return ResponseEntity.ok(userResponse);
     }
 
+    @PutMapping("/edit")
+    public ResponseEntity<UserResponse> editUserByToken(@RequestBody @Valid UserEdit userEdit, 
+        BindingResult result, JwtAuthenticationToken token) throws InputNotValidException, UserNotFoundException {
+        
+        if(result.hasErrors()) {
+            List<ObjectError> errors = result.getAllErrors();
+            String errorText = ErrorUtils.generateErrorMessage(errors);
+            
+            throw new InputNotValidException(errorText);
+        }
+
+        UUID subjectId = UUID.fromString(token.getName());
+
+        User oldUser = userService.getUser(subjectId);
+        List<Role> roles = oldUser.getRoles();
+
+        User user = UserMapper.toEntity(userEdit, roles);
+        user = userService.editUser(subjectId, user);
+        UserResponse userResponse = UserMapper.toResponse(user);
+
+        return ResponseEntity.ok(userResponse);
+    }
+
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<String> deleteUser(@PathVariable("id") UUID id) {
         userService.deleteUser(id);
 
