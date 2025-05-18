@@ -110,6 +110,7 @@ public class TaskService {
 
         if(tasksDate.size() == 1) {
             daysFocused = 1;
+            
         }else if(tasksDate.size() > 1) {
             daysFocused = 1;
 

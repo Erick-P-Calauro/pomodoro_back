@@ -29,10 +29,12 @@ import com.anonymous.pomodoro_backend.Errors.UserNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Task;
 import com.anonymous.pomodoro_backend.Models.User;
 import com.anonymous.pomodoro_backend.Models.Dtos.ProductivityRequest;
-import com.anonymous.pomodoro_backend.Models.Dtos.TimeInfoResponse;
+import com.anonymous.pomodoro_backend.Models.Dtos.TaskFocusResponse;
 import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskCreate;
 import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskEdit;
 import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskResponse;
+import com.anonymous.pomodoro_backend.Models.Dtos.TaskDate.TaskDateFocusResponse;
+import com.anonymous.pomodoro_backend.Models.Mappers.TaskDateMapper;
 import com.anonymous.pomodoro_backend.Models.Mappers.TaskMapper;
 import com.anonymous.pomodoro_backend.Services.TaskService;
 import com.anonymous.pomodoro_backend.Services.UserService;
@@ -58,13 +60,8 @@ public class TaskController {
         return ResponseEntity.ok(tasksResponse);
     }
 
-    @GetMapping("/tasks") // Tasks
+    @GetMapping("/list") // Tasks
     public ResponseEntity<List<TaskResponse>> listTaskByUser() {
-        return ResponseEntity.ok(new ArrayList<TaskResponse>());
-    }
-
-    @GetMapping("/tasks/date") // Tasks and Task Dates
-    public ResponseEntity<List<TaskResponse>> listTaskAndDatesByUser() {
         return ResponseEntity.ok(new ArrayList<TaskResponse>());
     }
 
@@ -87,7 +84,7 @@ public class TaskController {
     
     @PostMapping("/save")
     public ResponseEntity<TaskResponse> saveTask(@RequestBody @Valid TaskCreate taskCreate, 
-        BindingResult result, JwtAuthenticationToken token) throws InputNotValidException, UserNotFoundException {
+        BindingResult result, JwtAuthenticationToken token) throws InputNotValidException, UserNotFoundException, TaskNotFoundException {
 
         if(result.hasErrors()) {
             List<ObjectError> errors = result.getAllErrors();
@@ -103,6 +100,18 @@ public class TaskController {
         task.setUser(subject);
         
         task = taskService.saveTask(task);
+        if(task.getProductivityDone() != 0) {
+            final int productivityDone = task.getProductivityDone();
+
+            for(int i = 0 ; i < productivityDone; i++) {
+                taskService.addTaskDate(Date.valueOf(LocalDate.now()), Time.valueOf(LocalTime.now()), 30, task.getId());
+            }
+
+            if(task.getProductivityDone() == task.getProductivityGoal()) {
+                taskService.deactivateTask(task.getId());
+            }
+        }
+
         TaskResponse taskResponse = TaskMapper.toResponse(task);
 
         return ResponseEntity.ok(taskResponse);
@@ -176,8 +185,13 @@ public class TaskController {
         return ResponseEntity.ok("Sessão de produtividade adicionada com sucesso.");
     }
 
+    @GetMapping("/focus/list") // Tasks and Task Dates
+    public ResponseEntity<List<TaskResponse>> listTaskAndDatesByUser() {
+        return ResponseEntity.ok(new ArrayList<TaskResponse>());
+    }
+
     @GetMapping("/focus/{id}")
-    public ResponseEntity<TimeInfoResponse> getHoursFocused(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws TaskNotFoundException, UserNotFoundException {
+    public ResponseEntity<TaskFocusResponse> getFocusByTask(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws TaskNotFoundException, UserNotFoundException {
         
         UUID subjectId = UUID.fromString(token.getName());
         User user = userService.getUser(subjectId);
@@ -187,11 +201,16 @@ public class TaskController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
+        List<TaskDateFocusResponse> tasksResponse = TaskDateMapper.toFocusListResponse(taskService.getAllTaskDate(task.getId()));
         Float hours = taskService.getHoursFocused(id);
         Integer days = taskService.getDaysFocused(id);
 
-        return ResponseEntity.ok(new TimeInfoResponse(days, hours));
-    }
+        TaskFocusResponse response = new TaskFocusResponse(
+            task.getId(), task.getTitle(), 
+            task.getProductivityGoal(), task.getProductivityDone(), 
+            tasksResponse, days, hours);
 
+        return ResponseEntity.ok(response);
+    }
 
 }
