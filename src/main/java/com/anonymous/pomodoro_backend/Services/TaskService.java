@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.anonymous.pomodoro_backend.Errors.TaskNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Task;
 import com.anonymous.pomodoro_backend.Models.TaskDate;
+import com.anonymous.pomodoro_backend.Models.User;
 import com.anonymous.pomodoro_backend.Repositories.TaskRepository;
 
 @Service
@@ -39,6 +40,10 @@ public class TaskService {
         List<Task> tasks = taskRepository.findAll();
 
         return tasks;
+    }
+
+    public List<Task> listTasksByUser(User user) {
+        return taskRepository.findByUser(user);
     }
 
     public Task editTask(UUID id, Task newTask) {

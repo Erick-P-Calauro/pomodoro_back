@@ -27,6 +27,7 @@ import com.anonymous.pomodoro_backend.Errors.InputNotValidException;
 import com.anonymous.pomodoro_backend.Errors.TaskNotFoundException;
 import com.anonymous.pomodoro_backend.Errors.UserNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Task;
+import com.anonymous.pomodoro_backend.Models.TaskDate;
 import com.anonymous.pomodoro_backend.Models.User;
 import com.anonymous.pomodoro_backend.Models.Dtos.ProductivityRequest;
 import com.anonymous.pomodoro_backend.Models.Dtos.TaskFocusResponse;
@@ -60,9 +61,20 @@ public class TaskController {
         return ResponseEntity.ok(tasksResponse);
     }
 
-    @GetMapping("/list") // Tasks
-    public ResponseEntity<List<TaskResponse>> listTaskByUser() {
-        return ResponseEntity.ok(new ArrayList<TaskResponse>());
+    @GetMapping("/list/{id}") 
+    public ResponseEntity<List<TaskResponse>> listTaskByUser(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws UserNotFoundException {
+
+        UUID subjectId = UUID.fromString(token.getName());
+        User user = userService.getUser(subjectId);
+
+        if(!id.equals(subjectId) && !user.getUsername().equals("admin")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        List<Task> tasks = taskService.listTasksByUser(user);
+        List<TaskResponse> tasksResponse = TaskMapper.toListResponse(tasks);
+
+        return ResponseEntity.ok(tasksResponse);
     }
 
     @GetMapping("/{id}")
@@ -185,9 +197,32 @@ public class TaskController {
         return ResponseEntity.ok("Sessão de produtividade adicionada com sucesso.");
     }
 
-    @GetMapping("/focus/list") // Tasks and Task Dates
-    public ResponseEntity<List<TaskResponse>> listTaskAndDatesByUser() {
-        return ResponseEntity.ok(new ArrayList<TaskResponse>());
+    @GetMapping("/focus/user/{id}")
+    public ResponseEntity<List<TaskFocusResponse>> listTaskAndDatesByUser(@PathVariable("id") UUID userId, JwtAuthenticationToken token) throws UserNotFoundException, TaskNotFoundException {
+
+        UUID subjectId = UUID.fromString(token.getName());
+        User user = userService.getUser(subjectId);
+
+        if(!userId.equals(subjectId) && !user.getUsername().equals("admin")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        List<Task> tasks = taskService.listTasksByUser(user);
+        List<TaskFocusResponse> response = new ArrayList<TaskFocusResponse>();
+        for(int i = 0; i < tasks.size(); i++) {
+            Task task = tasks.get(i);
+            List<TaskDate> taskDates = taskService.getAllTaskDate(task.getId());
+            List<TaskDateFocusResponse> taskResponse = TaskDateMapper.toFocusListResponse(taskDates);
+            float hoursFocused = taskService.getHoursFocused(task.getId());
+            int daysFocused = taskService.getDaysFocused(task.getId());
+
+            response.add(new TaskFocusResponse(
+                task.getId(), task.getTitle(), 
+                task.getProductivityGoal(), task.getProductivityDone(), 
+                taskResponse, daysFocused, hoursFocused));
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/focus/{id}")
