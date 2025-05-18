@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import com.anonymous.pomodoro_backend.Errors.InputNotValidException;
 import com.anonymous.pomodoro_backend.Errors.UserNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Role;
@@ -35,7 +37,6 @@ import com.anonymous.pomodoro_backend.Models.Mappers.UserMapper;
 import com.anonymous.pomodoro_backend.Services.RoleService;
 import com.anonymous.pomodoro_backend.Services.UserService;
 import com.anonymous.pomodoro_backend.Utils.ErrorUtils;
-
 import jakarta.validation.Valid;
 
 @RestController
@@ -53,6 +54,30 @@ public class UserController {
 
     @Autowired
     BCryptPasswordEncoder passwordEncoder;
+
+    // Salvar usuário é livre
+    @PostMapping("/save")
+    public ResponseEntity<UserResponse> saveUser(@RequestBody @Valid UserCreate userCreate, BindingResult result) throws InputNotValidException {
+
+        if(result.hasErrors()) {
+            List<ObjectError> errors = result.getAllErrors();
+            String errorText = ErrorUtils.generateErrorMessage(errors);
+            
+            throw new InputNotValidException(errorText);
+        }
+
+        // 2L => ROLE USER (RolesConfiguration.java)
+        Role userRole = roleService.getRole(2L);
+        
+        // Cryptography to user password
+        userCreate.setPassword(passwordEncoder.encode(userCreate.getPassword()));
+
+        User user = UserMapper.toEntity(userCreate, userRole);
+        user = userService.saveUser(user);
+        UserResponse userResponse = UserMapper.toResponse(user);
+        
+        return ResponseEntity.ok(userResponse);
+    }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> loginUser(@RequestBody UserCreate userLogin) throws UserNotFoundException {
@@ -81,7 +106,7 @@ public class UserController {
         return ResponseEntity.ok(new LoginResponse(jwtValue, expiresIn));
     }
 
-    @GetMapping
+    @GetMapping // ("/")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<List<UserResponse>> listUsers() {
         List<User> users = userService.listUsers();
@@ -90,53 +115,31 @@ public class UserController {
         return ResponseEntity.ok(usersResponse);
     }
 
-    @GetMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-    public ResponseEntity<UserResponse> getUser(@PathVariable("id") UUID id) throws UserNotFoundException {
+    public ResponseEntity<String> deleteUser(@PathVariable("id") UUID id) {
+        userService.deleteUser(id);
 
-        User user = userService.getUser(id);
-        UserResponse userResponse = UserMapper.toResponse(user);
-
-        return ResponseEntity.ok(userResponse);
+        return ResponseEntity.ok("Usuário de id "+ id +" deletado com sucesso.");
     }
 
-    @GetMapping("/get")
-    public ResponseEntity<UserResponse> getUserByToken(JwtAuthenticationToken token) throws UserNotFoundException {
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> getUser(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws UserNotFoundException {
 
         UUID subjectId = UUID.fromString(token.getName());
-
         User user = userService.getUser(subjectId);
-        UserResponse userResponse = UserMapper.toResponse(user);
 
-        return ResponseEntity.ok(userResponse);
-    }
-
-    // Salvar usuário é livre
-    @PostMapping("/save")
-    public ResponseEntity<UserResponse> saveUser(@RequestBody @Valid UserCreate userCreate, BindingResult result) throws InputNotValidException {
-
-        if(result.hasErrors()) {
-            List<ObjectError> errors = result.getAllErrors();
-            String errorText = ErrorUtils.generateErrorMessage(errors);
-            
-            throw new InputNotValidException(errorText);
+        if(!id.equals(UUID.fromString(token.getName())) && !user.getUsername().equals("admin")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        // 2L => ROLE USER (RolesConfiguration.java)
-        Role userRole = roleService.getRole(2L);
-        
-        // Cryptography to user password
-        userCreate.setPassword(passwordEncoder.encode(userCreate.getPassword()));
-
-        User user = UserMapper.toEntity(userCreate, userRole);
-        user = userService.saveUser(user);
+        user = userService.getUser(id);
         UserResponse userResponse = UserMapper.toResponse(user);
-        
+
         return ResponseEntity.ok(userResponse);
     }
 
     @PutMapping("/edit/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<UserResponse> editUser(@PathVariable("id") UUID id, @RequestBody @Valid UserEdit userEdit, 
         BindingResult result, JwtAuthenticationToken token) throws InputNotValidException, UserNotFoundException {
         
@@ -147,45 +150,21 @@ public class UserController {
             throw new InputNotValidException(errorText);
         }
 
+        UUID subjectId = UUID.fromString(token.getName());
+        User user = userService.getUser(subjectId);
+
+        if(!id.equals(subjectId) && !user.getUsername().equals("admin")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
         User oldUser = userService.getUser(id);
         List<Role> roles = oldUser.getRoles();
 
-        User user = UserMapper.toEntity(userEdit, roles);
+        user = UserMapper.toEntity(userEdit, roles);
         user = userService.editUser(id, user);
         UserResponse userResponse = UserMapper.toResponse(user);
 
         return ResponseEntity.ok(userResponse);
-    }
-
-    @PutMapping("/edit")
-    public ResponseEntity<UserResponse> editUserByToken(@RequestBody @Valid UserEdit userEdit, 
-        BindingResult result, JwtAuthenticationToken token) throws InputNotValidException, UserNotFoundException {
-        
-        if(result.hasErrors()) {
-            List<ObjectError> errors = result.getAllErrors();
-            String errorText = ErrorUtils.generateErrorMessage(errors);
-            
-            throw new InputNotValidException(errorText);
-        }
-
-        UUID subjectId = UUID.fromString(token.getName());
-
-        User oldUser = userService.getUser(subjectId);
-        List<Role> roles = oldUser.getRoles();
-
-        User user = UserMapper.toEntity(userEdit, roles);
-        user = userService.editUser(subjectId, user);
-        UserResponse userResponse = UserMapper.toResponse(user);
-
-        return ResponseEntity.ok(userResponse);
-    }
-
-    @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-    public ResponseEntity<String> deleteUser(@PathVariable("id") UUID id) {
-        userService.deleteUser(id);
-
-        return ResponseEntity.ok("Usuário de id "+ id +" deletado com sucesso.");
     }
 
 }

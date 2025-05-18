@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +56,16 @@ public class TaskController {
         List<TaskResponse> tasksResponse = TaskMapper.toListResponse(tasks);
 
         return ResponseEntity.ok(tasksResponse);
+    }
+
+    @GetMapping("/tasks") // Tasks
+    public ResponseEntity<List<TaskResponse>> listTaskByUser() {
+        return ResponseEntity.ok(new ArrayList<TaskResponse>());
+    }
+
+    @GetMapping("/tasks/date") // Tasks and Task Dates
+    public ResponseEntity<List<TaskResponse>> listTaskAndDatesByUser() {
+        return ResponseEntity.ok(new ArrayList<TaskResponse>());
     }
 
     @GetMapping("/{id}")
