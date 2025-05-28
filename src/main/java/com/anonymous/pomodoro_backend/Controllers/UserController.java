@@ -94,11 +94,11 @@ public class UserController {
         final String scope = user.getRoles().stream().map(role -> role.getName()).collect(Collectors.joining(" "));
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-            .issuer("pomodoro_backend")
-            .subject(user.getId().toString())
-            .issuedAt(nowInstant)
-            .expiresAt(nowInstant.plusSeconds(expiresIn))
-            .claim("scope", scope)
+            .issuer("pomodoro_backend") // Quem gerou token
+            .subject(user.getId().toString()) // Para quem foi gerado o token
+            .issuedAt(nowInstant) // Quando foi gerado
+            .expiresAt(nowInstant.plusSeconds(expiresIn)) // Quando espira
+            .claim("scope", scope) // Escopo (Roles)
             .build();
         
         String jwtValue = tokenEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
