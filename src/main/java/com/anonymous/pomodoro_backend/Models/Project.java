@@ -3,6 +3,7 @@ package com.anonymous.pomodoro_backend.Models;
 import java.util.List;
 import java.util.UUID;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,6 +28,7 @@ public class Project {
     private UUID id;
 
     @NotBlank
+    @Column(unique = true)
     private String name;
 
     @OneToMany(mappedBy="project", cascade = CascadeType.DETACH)
