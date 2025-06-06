@@ -35,12 +35,17 @@ public class ProjectService {
         return projectRepository.findAll();
     }
 
+    public List<Project> listProjectsByUser(UUID userId) {
+        return projectRepository.findByUser(userId);
+    }
+
     public Project editProject(UUID id, Project project) {
         project.setId(id);
 
         return projectRepository.save(project);
     }
 
-    
-
+    public void deleteProject(Project project) {
+        projectRepository.delete(project);
+    }
 }
