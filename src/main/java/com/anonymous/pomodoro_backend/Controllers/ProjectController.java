@@ -137,9 +137,37 @@ public class ProjectController {
         return ResponseEntity.ok(new ProjectResponse());
     }
 
-    @PutMapping("/add/task/{id}")
-    public ResponseEntity<ProjectResponse> addTaskOfProject() {
-        return ResponseEntity.ok(new ProjectResponse());
+    @PutMapping("/add/task/{projectId}/{taskId}")
+    public ResponseEntity<ProjectResponse> addTaskOfProject(
+        @PathVariable("projectId") UUID projectId, 
+        @PathVariable("taskId") UUID taskId, JwtAuthenticationToken token) throws UserNotFoundException, ProjectNotFoundException, TaskNotFoundException {
+
+            UUID subjectId = UUID.fromString(token.getName());
+
+            Project project = projectService.getProject(projectId);
+            Task task = taskService.getTask(taskId);
+            User subject = userService.getUser(subjectId);
+
+            UUID projectUser = project.getUser().getId();
+            UUID taskUser = task.getUser().getId();
+
+            // Authorization by matching user of project, task and token.
+            if(!projectUser.equals(subjectId) && !taskUser.equals(subjectId) && !subject.getUsername().equals("admin")){
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+
+            List<Task> newTasksList = project.getTasks();
+            newTasksList.add(task);
+
+            task.setProject(project);
+            project.setTasks(newTasksList);
+
+            taskService.saveTask(task);
+            project = projectService.saveProject(project);
+
+            ProjectResponse response = ProjectMapper.toDTO(project);
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/delete/task/{id}")

@@ -132,7 +132,7 @@ public class UserController {
         return ResponseEntity.ok("Usuário de id "+ id +" deletado com sucesso.");
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id}") // Adicionar getUser by token
     public ResponseEntity<UserResponse> getUser(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws UserNotFoundException {
 
         UUID subjectId = UUID.fromString(token.getName());
