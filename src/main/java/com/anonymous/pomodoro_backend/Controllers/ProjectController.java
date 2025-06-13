@@ -25,10 +25,16 @@ import com.anonymous.pomodoro_backend.Errors.TaskNotFoundException;
 import com.anonymous.pomodoro_backend.Errors.UserNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Project;
 import com.anonymous.pomodoro_backend.Models.Task;
+import com.anonymous.pomodoro_backend.Models.TaskDate;
 import com.anonymous.pomodoro_backend.Models.User;
 import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectCreate;
+import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectEdit;
+import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectFocusResponse;
 import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectResponse;
+import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskFocusResponse;
+import com.anonymous.pomodoro_backend.Models.Dtos.TaskDate.TaskDateFocusResponse;
 import com.anonymous.pomodoro_backend.Models.Mappers.ProjectMapper;
+import com.anonymous.pomodoro_backend.Models.Mappers.TaskDateMapper;
 import com.anonymous.pomodoro_backend.Services.ProjectService;
 import com.anonymous.pomodoro_backend.Services.TaskService;
 import com.anonymous.pomodoro_backend.Services.UserService;
@@ -127,17 +133,92 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/focus/{id}")
-    public ResponseEntity<ProjectResponse> getDetailedProject(){
-        return ResponseEntity.ok(new ProjectResponse());
+    @GetMapping("/focus/{projectId}")
+    public ResponseEntity<ProjectFocusResponse> getDetailedProject(@PathVariable("projectId") UUID projectId, JwtAuthenticationToken token) throws UserNotFoundException, ProjectNotFoundException, TaskNotFoundException{
+
+        UUID subjectId = UUID.fromString(token.getName());
+        User subject = userService.getUser(subjectId);
+
+        Project project = projectService.getProject(projectId);
+        UUID projectUser = project.getUser().getId();
+
+        if(!projectUser.equals(subjectId) && !subject.getUsername().equals("admin")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        List<Task> tasks = project.getTasks();
+
+        List<TaskFocusResponse> tasksFocusResponse = new ArrayList<TaskFocusResponse>();
+        float projectHoursFocused = 0.0f;
+        int projectDaysFocused = 0;
+
+        // For each task extract Hour and Days productivity
+        // List of taskDate
+        // Format to Response and store in tasksFocusResponse
+        for(int i = 0; i < tasks.size(); i++){
+            Task task = tasks.get(i);
+            UUID id = task.getId();
+
+            // Sum to project hours and days focused
+            float taskHoursFocused = taskService.getHoursFocused(id);
+            int taskDaysFocused = taskService.getDaysFocused(id);
+
+            projectHoursFocused += taskHoursFocused;
+            projectDaysFocused += taskDaysFocused;
+
+            // Extracting list of taskDate of each task
+            List<TaskDate> taskDate = task.getTaskDates();
+            List<TaskDateFocusResponse> taskDateResponse = TaskDateMapper.toFocusListResponse(taskDate);
+
+            // For each task return a task response
+            TaskFocusResponse taskResponse = new TaskFocusResponse(
+                id, task.getTitle(), task.getProductivityGoal(), 
+                task.getProductivityDone(), 
+                taskDateResponse, taskDaysFocused, taskHoursFocused);
+            
+            tasksFocusResponse.add(taskResponse);
+        }
+
+        ProjectFocusResponse response = new ProjectFocusResponse();
+        response.setId(project.getId());
+        response.setName(project.getName());
+        response.setHoursFocused(projectHoursFocused);
+        response.setDaysFocused(projectDaysFocused);
+        response.setTasks(tasksFocusResponse);
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/edit/{id}")
-    public ResponseEntity<ProjectResponse> editProject() {
-        return ResponseEntity.ok(new ProjectResponse());
+    public ResponseEntity<ProjectResponse> editProject(@PathVariable("id") UUID id, @Valid @RequestBody ProjectEdit projectEdit, BindingResult result, JwtAuthenticationToken token) throws InputNotValidException, UserNotFoundException, ProjectNotFoundException {
+        
+        if(result.hasErrors()) {
+            List<ObjectError> errors = result.getAllErrors();
+            String errorMessage = ErrorUtils.generateErrorMessage(errors);
+
+            throw new InputNotValidException(errorMessage);
+        }
+
+        UUID subjectId = UUID.fromString(token.getName());
+        User subject = userService.getUser(subjectId);
+
+        Project project = ProjectMapper.toEntity(projectEdit, subject);
+
+        if(!subjectId.equals(project.getId()) && !subject.getUsername().equals("admin")){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        Project oldProject = projectService.getProject(id);
+
+        project.setTasks(oldProject.getTasks());
+        project = projectService.editProject(oldProject.getId(), project);
+        
+        ProjectResponse response = ProjectMapper.toDTO(project);
+
+        return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/add/task/{projectId}/{taskId}")
+    @PutMapping("/{projectId}/add/task/{taskId}")
     public ResponseEntity<ProjectResponse> addTaskOfProject(
         @PathVariable("projectId") UUID projectId, 
         @PathVariable("taskId") UUID taskId, JwtAuthenticationToken token) throws UserNotFoundException, ProjectNotFoundException, TaskNotFoundException {
@@ -170,9 +251,37 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/delete/task/{id}")
-    public ResponseEntity<ProjectResponse> deleteTaskofProject() {
-        return ResponseEntity.ok(new ProjectResponse());
+    @PutMapping("/{projectId}/delete/task/{taskId}")
+    public ResponseEntity<ProjectResponse> deleteTaskofProject(
+        @PathVariable("projectId") UUID projectId,
+        @PathVariable("taskId") UUID taskId, JwtAuthenticationToken token) throws ProjectNotFoundException, TaskNotFoundException, UserNotFoundException {
+
+            UUID subjectId = UUID.fromString(token.getName());
+
+            Project project = projectService.getProject(projectId);
+            Task task = taskService.getTask(taskId);
+            User subject = userService.getUser(subjectId);
+
+            UUID projectUser = project.getUser().getId();
+            UUID taskUser = task.getUser().getId();
+
+            // Authorization by matching user of project, task and token.
+            if(!projectUser.equals(subjectId) && !taskUser.equals(subjectId) && !subject.getUsername().equals("admin")){
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+
+            List<Task> newTasksList = project.getTasks();
+            newTasksList.remove(task);
+
+            task.setProject(null);
+            project.setTasks(newTasksList);
+
+            taskService.saveTask(task);
+            project = projectService.saveProject(project);
+
+            ProjectResponse response = ProjectMapper.toDTO(project);
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/delete/{id}")

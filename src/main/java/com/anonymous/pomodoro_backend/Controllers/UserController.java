@@ -186,7 +186,7 @@ public class UserController {
         return ResponseEntity.ok(userResponse);
     }
 
-    @GetMapping("/focus/{id}")
+    @GetMapping("/focus/{id}") // Transferir para task e fazer um endpoint para retornar o foco geral do usuário
     public ResponseEntity<TaskFocusResponse> getFocusByTask(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws TaskNotFoundException, UserNotFoundException {
         
         UUID subjectId = UUID.fromString(token.getName());

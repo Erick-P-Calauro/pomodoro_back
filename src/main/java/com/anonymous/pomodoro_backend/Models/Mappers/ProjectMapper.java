@@ -7,6 +7,7 @@ import com.anonymous.pomodoro_backend.Models.Project;
 import com.anonymous.pomodoro_backend.Models.Task;
 import com.anonymous.pomodoro_backend.Models.User;
 import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectCreate;
+import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectEdit;
 import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectResponse;
 
 public class ProjectMapper {
@@ -35,6 +36,15 @@ public class ProjectMapper {
             .collect(Collectors.toList());
 
         return projectsResponse;
+    }
+
+    public static Project toEntity(ProjectEdit projectEdit, User subject) {
+        Project project = new Project();
+        project.setName(projectEdit.getName());
+        project.setTasks(new ArrayList<Task>());
+        project.setUser(subject);
+
+        return project;
     }
 
 }
