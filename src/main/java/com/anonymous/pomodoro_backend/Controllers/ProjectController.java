@@ -93,14 +93,16 @@ public class ProjectController {
         return ResponseEntity.ok(projectResponse);
     }
 
-    @GetMapping("/{id}") // Teste
+    @GetMapping("/{id}")
     public ResponseEntity<ProjectResponse> getProject(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws UserNotFoundException, ProjectNotFoundException {
         
         Project project = projectService.getProject(id);
         UUID projectUserId = project.getUser().getId();
+        
         UUID subjectId = UUID.fromString(token.getName());
+        User subject = userService.getUser(subjectId);
 
-        if(!subjectId.equals(projectUserId) && !project.getUser().getUsername().equals("admin")){
+        if(!subjectId.equals(projectUserId) && !subject.getUsername().equals("admin")){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         
@@ -109,7 +111,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/list/{id}") // Teste
+    @GetMapping("/list/{id}")
     public ResponseEntity<List<ProjectResponse>> listProjectsByUser(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws UserNotFoundException {
         
         UUID subjectId = UUID.fromString(token.getName());
@@ -145,7 +147,7 @@ public class ProjectController {
         return ResponseEntity.ok(new ProjectResponse());
     }
 
-    @DeleteMapping("/delete/{id}") // Teste
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteProject(@PathVariable("id") UUID projectId, JwtAuthenticationToken token) throws UserNotFoundException, ProjectNotFoundException {
         
         Project project = projectService.getProject(projectId);

@@ -22,6 +22,7 @@ public class ProjectMapper {
 
     public static ProjectResponse toDTO(Project project) {
         ProjectResponse response = new ProjectResponse();
+        response.setId(project.getId());
         response.setName(project.getName());
         response.setTasks(TaskMapper.toListResponse(project.getTasks()));
 
