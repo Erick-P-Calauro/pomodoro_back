@@ -115,7 +115,7 @@ public class UserController {
         return ResponseEntity.ok(new LoginResponse(jwtValue, expiresIn));
     }
 
-    @GetMapping // ("/")
+    @GetMapping("/list") // ("/")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<List<UserResponse>> listUsers() {
         List<User> users = userService.listUsers();
@@ -132,7 +132,17 @@ public class UserController {
         return ResponseEntity.ok("Usuário de id "+ id +" deletado com sucesso.");
     }
 
-    @GetMapping("/{id}") // Adicionar getUser by token
+    @GetMapping("/")
+    public ResponseEntity<UserResponse> getUserByToken(JwtAuthenticationToken token) throws UserNotFoundException {
+        UUID subjectId = UUID.fromString(token.getName());
+        User user = userService.getUser(subjectId);
+
+        UserResponse userResponse = UserMapper.toResponse(user);
+
+        return ResponseEntity.ok(userResponse);
+    }
+
+    @GetMapping("/{id}") 
     public ResponseEntity<UserResponse> getUser(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws UserNotFoundException {
 
         UUID subjectId = UUID.fromString(token.getName());
