@@ -119,7 +119,7 @@ public class ProjectController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        List<Project> projects = projectService.listProjectsByUser(id);
+        List<Project> projects = projectService.listProjectsByUser(subject);
         List<ProjectResponse> response = ProjectMapper.toListDTO(projects);
        
         return ResponseEntity.ok(response);

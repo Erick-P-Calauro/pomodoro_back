@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.anonymous.pomodoro_backend.Errors.ProjectNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Project;
+import com.anonymous.pomodoro_backend.Models.User;
 import com.anonymous.pomodoro_backend.Repositories.ProjectRepository;
 
 @Service
@@ -35,8 +36,8 @@ public class ProjectService {
         return projectRepository.findAll();
     }
 
-    public List<Project> listProjectsByUser(UUID userId) {
-        return projectRepository.findByUser(userId);
+    public List<Project> listProjectsByUser(User user) {
+        return projectRepository.findByUser(user);
     }
 
     public Project editProject(UUID id, Project project) {
