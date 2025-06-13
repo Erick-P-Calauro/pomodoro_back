@@ -197,6 +197,29 @@ public class TaskController {
         return ResponseEntity.ok("Sessão de produtividade adicionada com sucesso.");
     }
 
+    @GetMapping("/focus/{id}") 
+    public ResponseEntity<TaskFocusResponse> getFocusByTask(@PathVariable("id") UUID id, JwtAuthenticationToken token) throws TaskNotFoundException, UserNotFoundException {
+        
+        UUID subjectId = UUID.fromString(token.getName());
+        User user = userService.getUser(subjectId);
+        Task task = taskService.getTask(id);
+
+        if(!(task.getUser().getId().equals(subjectId)) && !user.getUsername().equals("admin")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        List<TaskDateFocusResponse> tasksResponse = TaskDateMapper.toFocusListResponse(taskService.getAllTaskDate(task.getId()));
+        Float hours = taskService.getHoursFocused(id);
+        Integer days = taskService.getDaysFocused(id);
+
+        TaskFocusResponse response = new TaskFocusResponse(
+            task.getId(), task.getTitle(), 
+            task.getProductivityGoal(), task.getProductivityDone(), 
+            tasksResponse, days, hours);
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/focus/user/{id}")
     public ResponseEntity<List<TaskFocusResponse>> listTaskAndDatesByUser(@PathVariable("id") UUID userId, JwtAuthenticationToken token) throws UserNotFoundException, TaskNotFoundException {
 
