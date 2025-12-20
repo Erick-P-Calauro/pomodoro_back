@@ -86,7 +86,7 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> loginUser(@RequestBody UserCreate userLogin) throws UserNotFoundException {
-        
+
         User user = userService.getUserByUsername(userLogin.getUsername());
 
         if(!(passwordEncoder.matches(userLogin.getPassword(), user.getPassword()))) {
@@ -94,7 +94,7 @@ public class UserController {
         }
 
         final Instant nowInstant = Instant.now();
-        final Long expiresIn = 600L; 
+        final Long expiresIn = 6000L; // 1 Hora  
 
         final String scope = user.getRoles().stream().map(role -> role.getName()).collect(Collectors.joining(" "));
 
