@@ -37,7 +37,8 @@ import com.anonymous.pomodoro_backend.Models.Mappers.UserMapper;
 import com.anonymous.pomodoro_backend.Services.RoleService;
 import com.anonymous.pomodoro_backend.Services.TaskService;
 import com.anonymous.pomodoro_backend.Services.UserService;
-import com.anonymous.pomodoro_backend.Utils.ErrorUtils;
+import com.anonymous.pomodoro_backend.utils.ErrorUtils;
+
 import jakarta.validation.Valid;
 
 @RestController

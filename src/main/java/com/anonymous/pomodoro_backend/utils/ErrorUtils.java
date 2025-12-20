@@ -1,5 +1,4 @@
-package com.anonymous.pomodoro_backend.Utils;
-
+package com.anonymous.pomodoro_backend.utils;
 import java.util.List;
 
 import org.springframework.validation.ObjectError;

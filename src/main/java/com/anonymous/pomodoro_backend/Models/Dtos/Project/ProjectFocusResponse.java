@@ -2,7 +2,8 @@ package com.anonymous.pomodoro_backend.Models.Dtos.Project;
 
 import java.util.List;
 import java.util.UUID;
-import com.anonymous.pomodoro_backend.Models.Dtos.TaskFocusResponse;
+
+import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskFocusResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

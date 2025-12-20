@@ -41,9 +41,11 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(authorize -> authorize
             .requestMatchers(HttpMethod.POST, "/user/login").permitAll()
             .requestMatchers(HttpMethod.POST, "/user/save").permitAll()
+            .requestMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/v3/api-docs*/**").permitAll()
             .anyRequest().authenticated()
         )
-        .csrf(csrf -> csrf.disable())
+        .csrf(csrf -> csrf.disable()) // CORS
         .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
