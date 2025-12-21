@@ -1,0 +1,15 @@
+# Genereal
+.gitignore
+.gitattributes
+/**/docker-compose.yaml
+/**/docker
+
+# Frontend
+/node_modules
+
+# Backend
+mvnw
+mvnw.cmd
+/**/app.pub
+/**/app.key
+/**/target
