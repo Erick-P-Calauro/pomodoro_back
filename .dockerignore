@@ -1,13 +1,16 @@
 # Genereal
 .gitignore
+.dockerignore
 .gitattributes
 /**/docker-compose.yaml
-/**/docker
+/**/Dockerfile
+README.md
 
 # Frontend
 /node_modules
 
 # Backend
+/.mvn/**
 mvnw
 mvnw.cmd
 /**/app.pub
