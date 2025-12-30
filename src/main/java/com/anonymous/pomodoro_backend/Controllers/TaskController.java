@@ -29,7 +29,6 @@ import com.anonymous.pomodoro_backend.Errors.UserNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Task;
 import com.anonymous.pomodoro_backend.Models.TaskDate;
 import com.anonymous.pomodoro_backend.Models.User;
-import com.anonymous.pomodoro_backend.Models.Dtos.ProductivityRequest;
 import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskCreate;
 import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskEdit;
 import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskFocusResponse;
@@ -42,6 +41,7 @@ import com.anonymous.pomodoro_backend.Services.UserService;
 import com.anonymous.pomodoro_backend.utils.ErrorUtils;
 
 import jakarta.validation.Valid;
+import jakarta.websocket.server.PathParam;
 
 @RestController
 @RequestMapping("/task")
@@ -175,8 +175,8 @@ public class TaskController {
     }
 
     @GetMapping("/productivity/{id}") 
-    public ResponseEntity<String> addProcutivity(@PathVariable("id") UUID id, @RequestBody ProductivityRequest request, 
-        BindingResult result, JwtAuthenticationToken token) throws TaskNotFoundException, UserNotFoundException {
+    public ResponseEntity<String> addProcutivity(@PathVariable("id") UUID id, @PathParam("time") int taskTime, 
+        JwtAuthenticationToken token) throws TaskNotFoundException, UserNotFoundException {
 
         UUID subjectId = UUID.fromString(token.getName());
         User user = userService.getUser(subjectId);
@@ -187,7 +187,7 @@ public class TaskController {
         }
 
         taskService.addProductivityDone(id);
-        taskService.addTaskDate(Date.valueOf(LocalDate.now()), Time.valueOf(LocalTime.now()), request.getMinutes(), id);
+        taskService.addTaskDate(Date.valueOf(LocalDate.now()), Time.valueOf(LocalTime.now()), taskTime , id);
 
         task = taskService.getTask(id);
 
