@@ -1,0 +1,16 @@
+# Application Configuration
+spring.application.name = pomodoro-backend
+pomodoro.admin.username=admin_username
+pomodoro.admin.password=admin_password
+server.error.include-stacktrace=never
+
+# Database Configuration
+spring.datasource.username=username
+spring.datasource.password=password
+spring.datasource.url=jdbc:postgresql://host:5432/dbname
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+# Authentication
+jwt.token.private=classpath:private-key
+jwt.token.public=classpath:public-key

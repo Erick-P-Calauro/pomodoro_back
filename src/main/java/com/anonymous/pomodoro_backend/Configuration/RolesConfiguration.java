@@ -3,6 +3,7 @@ package com.anonymous.pomodoro_backend.Configuration;
 import java.util.ArrayList;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,12 @@ public class RolesConfiguration implements CommandLineRunner {
     @Autowired
     UserService userService;
 
+    @Value("${pomodoro.admin.username}")
+    private String adminUsername;
+
+    @Value("${pomodoro.admin.password}")
+    private String adminPassword;
+
     @Autowired
     BCryptPasswordEncoder passwordEncoder;
 
@@ -38,8 +45,8 @@ public class RolesConfiguration implements CommandLineRunner {
             roleService.saveRole(USER);
 
             User ADMIN_USER = new User();
-            ADMIN_USER.setUsername("admin");
-            ADMIN_USER.setPassword(passwordEncoder.encode("admin"));
+            ADMIN_USER.setUsername(adminUsername);
+            ADMIN_USER.setPassword(passwordEncoder.encode(adminPassword));
             
             ArrayList<Role> roles = new ArrayList<Role>();
             roles.add(ADMIN_ROLE);
