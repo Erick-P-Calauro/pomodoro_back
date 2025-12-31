@@ -1,4 +1,4 @@
-package com.anonymous.pomodoro_backend.Services;
+package com.anonymous.pomodoro_backend.Users.Services;
 
 import java.util.List;
 import java.util.Optional;
@@ -8,8 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.anonymous.pomodoro_backend.Errors.UserNotFoundException;
-import com.anonymous.pomodoro_backend.Models.User;
-import com.anonymous.pomodoro_backend.Repositories.UserRepository;
+import com.anonymous.pomodoro_backend.Users.Models.User;
+import com.anonymous.pomodoro_backend.Users.Repositories.UserRepository;
 
 @Service
 public class UserService {

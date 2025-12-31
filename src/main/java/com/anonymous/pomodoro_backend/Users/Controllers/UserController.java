@@ -1,9 +1,12 @@
-package com.anonymous.pomodoro_backend.Controllers;
+package com.anonymous.pomodoro_backend.Users.Controllers;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,16 +30,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import com.anonymous.pomodoro_backend.Errors.InputNotValidException;
 import com.anonymous.pomodoro_backend.Errors.UserNotFoundException;
-import com.anonymous.pomodoro_backend.Models.Role;
-import com.anonymous.pomodoro_backend.Models.User;
-import com.anonymous.pomodoro_backend.Models.Dtos.LoginResponse;
-import com.anonymous.pomodoro_backend.Models.Dtos.User.UserCreate;
-import com.anonymous.pomodoro_backend.Models.Dtos.User.UserEdit;
-import com.anonymous.pomodoro_backend.Models.Dtos.User.UserResponse;
-import com.anonymous.pomodoro_backend.Models.Mappers.UserMapper;
-import com.anonymous.pomodoro_backend.Services.RoleService;
-import com.anonymous.pomodoro_backend.Services.TaskService;
-import com.anonymous.pomodoro_backend.Services.UserService;
+import com.anonymous.pomodoro_backend.Users.Models.Role;
+import com.anonymous.pomodoro_backend.Users.Models.User;
+import com.anonymous.pomodoro_backend.Users.Models.DTO.LoginResponse;
+import com.anonymous.pomodoro_backend.Users.Models.DTO.User.UserCreate;
+import com.anonymous.pomodoro_backend.Users.Models.DTO.User.UserEdit;
+import com.anonymous.pomodoro_backend.Users.Models.DTO.User.UserResponse;
+import com.anonymous.pomodoro_backend.Users.Services.RoleService;
+import com.anonymous.pomodoro_backend.Users.Services.UserService;
 import com.anonymous.pomodoro_backend.utils.ErrorUtils;
 
 import jakarta.validation.Valid;
@@ -52,7 +53,7 @@ public class UserController {
     RoleService roleService;
 
     @Autowired
-    TaskService taskService;
+    ModelMapper mapper;
 
     @Autowired
     JwtEncoder tokenEncoder;
@@ -71,17 +72,22 @@ public class UserController {
             throw new InputNotValidException(errorText);
         }
 
-        // 2L => ROLE USER (RolesConfiguration.java)
+        // 2L é o identificador do tipo de usuário comum
         Role userRole = roleService.getRole(2L);
         
-        // Cryptography to user password
+        // Criptografia da senha
         userCreate.setPassword(passwordEncoder.encode(userCreate.getPassword()));
 
-        User user = UserMapper.toEntity(userCreate, userRole);
+        User user = mapper.map(userCreate, User.class);
+        ArrayList<Role> roles = new ArrayList<Role>();
+        roles.add(userRole);
+        user.setRoles(roles);
+
         user = userService.saveUser(user);
-        UserResponse userResponse = UserMapper.toResponse(user);
+
+        UserResponse userResponse = mapper.map(user, UserResponse.class);
         
-        return ResponseEntity.ok(userResponse);
+        return ResponseEntity.status(201).body(userResponse);
     }
 
     @PostMapping("/login")
@@ -111,29 +117,12 @@ public class UserController {
         return ResponseEntity.ok(new LoginResponse(jwtValue, expiresIn));
     }
 
-    @GetMapping("/list") // ("/")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-    public ResponseEntity<List<UserResponse>> listUsers() {
-        List<User> users = userService.listUsers();
-        List<UserResponse> usersResponse = UserMapper.toListResponse(users);
-
-        return ResponseEntity.ok(usersResponse);
-    }
-
-    @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-    public ResponseEntity<String> deleteUser(@PathVariable("id") UUID id) {
-        userService.deleteUser(id);
-
-        return ResponseEntity.ok("Usuário de id "+ id +" deletado com sucesso.");
-    }
-
     @GetMapping("/")
     public ResponseEntity<UserResponse> getUserByToken(JwtAuthenticationToken token) throws UserNotFoundException {
         UUID subjectId = UUID.fromString(token.getName());
         User user = userService.getUser(subjectId);
 
-        UserResponse userResponse = UserMapper.toResponse(user);
+        UserResponse userResponse = mapper.map(user, UserResponse.class);
 
         return ResponseEntity.ok(userResponse);
     }
@@ -149,7 +138,7 @@ public class UserController {
         }
 
         user = userService.getUser(id);
-        UserResponse userResponse = UserMapper.toResponse(user);
+        UserResponse userResponse = mapper.map(user, UserResponse.class);
 
         return ResponseEntity.ok(userResponse);
     }
@@ -175,11 +164,30 @@ public class UserController {
         User oldUser = userService.getUser(id);
         List<Role> roles = oldUser.getRoles();
 
-        user = UserMapper.toEntity(userEdit, roles);
-        user = userService.editUser(id, user);
-        UserResponse userResponse = UserMapper.toResponse(user);
+        user = mapper.map(userEdit, User.class);
+        user.setRoles(roles);
 
-        return ResponseEntity.ok(userResponse);
+        user = userService.editUser(id, user);
+        UserResponse userResponse = mapper.map(user, UserResponse.class);
+
+        return ResponseEntity.status(204).body(userResponse);
+    }
+
+    @GetMapping("/list") // ("/")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    public ResponseEntity<List<UserResponse>> listUsers() {
+        List<User> users = userService.listUsers();
+        List<UserResponse> usersResponse = users.stream().map((user) -> mapper.map(user, UserResponse.class)).toList();
+
+        return ResponseEntity.ok(usersResponse);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    public ResponseEntity<String> deleteUser(@PathVariable("id") UUID id) {
+        userService.deleteUser(id);
+
+        return ResponseEntity.status(204).body("Usuário de id "+ id +" deletado com sucesso.");
     }
 
 }

@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 
 import com.anonymous.pomodoro_backend.Errors.ProjectNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Project;
-import com.anonymous.pomodoro_backend.Models.User;
 import com.anonymous.pomodoro_backend.Repositories.ProjectRepository;
+import com.anonymous.pomodoro_backend.Users.Models.User;
 
 @Service
 public class ProjectService {

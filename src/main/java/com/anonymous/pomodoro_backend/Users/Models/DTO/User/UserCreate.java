@@ -1,4 +1,4 @@
-package com.anonymous.pomodoro_backend.Models.Dtos.User;
+package com.anonymous.pomodoro_backend.Users.Models.DTO.User;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

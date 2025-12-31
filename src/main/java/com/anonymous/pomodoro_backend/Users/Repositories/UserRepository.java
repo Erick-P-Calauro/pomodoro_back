@@ -1,10 +1,11 @@
-package com.anonymous.pomodoro_backend.Repositories;
+package com.anonymous.pomodoro_backend.Users.Repositories;
 
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import com.anonymous.pomodoro_backend.Models.User;
+
+import com.anonymous.pomodoro_backend.Users.Models.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {

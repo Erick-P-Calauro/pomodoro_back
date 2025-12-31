@@ -1,8 +1,10 @@
-package com.anonymous.pomodoro_backend.Models.Dtos.User;
+package com.anonymous.pomodoro_backend.Users.Models.DTO.User;
 
 import java.util.List;
 import java.util.UUID;
-import com.anonymous.pomodoro_backend.Models.Role;
+
+import com.anonymous.pomodoro_backend.Users.Models.Role;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

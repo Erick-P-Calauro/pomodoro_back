@@ -26,7 +26,6 @@ import com.anonymous.pomodoro_backend.Errors.UserNotFoundException;
 import com.anonymous.pomodoro_backend.Models.Project;
 import com.anonymous.pomodoro_backend.Models.Task;
 import com.anonymous.pomodoro_backend.Models.TaskDate;
-import com.anonymous.pomodoro_backend.Models.User;
 import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectCreate;
 import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectEdit;
 import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectFocusResponse;
@@ -37,7 +36,8 @@ import com.anonymous.pomodoro_backend.Models.Mappers.ProjectMapper;
 import com.anonymous.pomodoro_backend.Models.Mappers.TaskDateMapper;
 import com.anonymous.pomodoro_backend.Services.ProjectService;
 import com.anonymous.pomodoro_backend.Services.TaskService;
-import com.anonymous.pomodoro_backend.Services.UserService;
+import com.anonymous.pomodoro_backend.Users.Models.User;
+import com.anonymous.pomodoro_backend.Users.Services.UserService;
 import com.anonymous.pomodoro_backend.utils.ErrorUtils;
 
 import jakarta.validation.Valid;

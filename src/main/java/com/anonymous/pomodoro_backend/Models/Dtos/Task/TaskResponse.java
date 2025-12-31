@@ -1,7 +1,9 @@
 package com.anonymous.pomodoro_backend.Models.Dtos.Task;
 
 import java.util.UUID;
-import com.anonymous.pomodoro_backend.Models.Dtos.User.UserResponse;
+
+import com.anonymous.pomodoro_backend.Users.Models.DTO.User.UserResponse;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

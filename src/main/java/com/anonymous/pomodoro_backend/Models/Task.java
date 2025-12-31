@@ -3,6 +3,8 @@ package com.anonymous.pomodoro_backend.Models;
 import java.util.List;
 import java.util.UUID;
 
+import com.anonymous.pomodoro_backend.Users.Models.User;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

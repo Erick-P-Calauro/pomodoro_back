@@ -1,4 +1,4 @@
-package com.anonymous.pomodoro_backend.Models;
+package com.anonymous.pomodoro_backend.Users.Models;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

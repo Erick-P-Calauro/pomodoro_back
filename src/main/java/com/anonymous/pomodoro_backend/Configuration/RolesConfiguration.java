@@ -8,10 +8,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import com.anonymous.pomodoro_backend.Models.Role;
-import com.anonymous.pomodoro_backend.Models.User;
-import com.anonymous.pomodoro_backend.Services.RoleService;
-import com.anonymous.pomodoro_backend.Services.UserService;
+import com.anonymous.pomodoro_backend.Users.Models.Role;
+import com.anonymous.pomodoro_backend.Users.Models.User;
+import com.anonymous.pomodoro_backend.Users.Services.RoleService;
+import com.anonymous.pomodoro_backend.Users.Services.UserService;
 
 import jakarta.transaction.Transactional;
 

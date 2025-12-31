@@ -7,6 +7,8 @@ import com.anonymous.pomodoro_backend.Models.TaskDate;
 import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskCreate;
 import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskEdit;
 import com.anonymous.pomodoro_backend.Models.Dtos.Task.TaskResponse;
+import com.anonymous.pomodoro_backend.Users.Models.User;
+import com.anonymous.pomodoro_backend.Users.Models.DTO.User.UserResponse;
 
 public class TaskMapper {
 
@@ -45,7 +47,15 @@ public class TaskMapper {
         taskResponse.setProductivityGoal(task.getProductivityGoal());
         taskResponse.setProductivityDone(task.getProductivityDone());
         taskResponse.setActive(task.isActive());
-        taskResponse.setOwner(UserMapper.toResponse(task.getUser()));
+
+        User user = task.getUser();
+
+        UserResponse userResponse = new UserResponse();
+        userResponse.setId(user.getId());
+        userResponse.setUsername(user.getUsername());
+        userResponse.setRoles(user.getRoles());
+
+        taskResponse.setOwner(userResponse);
 
         return taskResponse;
     }

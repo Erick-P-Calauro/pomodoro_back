@@ -1,7 +1,10 @@
-package com.anonymous.pomodoro_backend.Models;
+package com.anonymous.pomodoro_backend.Users.Models;
 
 import java.util.List;
 import java.util.UUID;
+
+import com.anonymous.pomodoro_backend.Models.Project;
+import com.anonymous.pomodoro_backend.Models.Task;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

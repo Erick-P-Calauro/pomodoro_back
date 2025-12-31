@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import com.anonymous.pomodoro_backend.Models.Project;
 import com.anonymous.pomodoro_backend.Models.Task;
-import com.anonymous.pomodoro_backend.Models.User;
 import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectCreate;
 import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectEdit;
 import com.anonymous.pomodoro_backend.Models.Dtos.Project.ProjectResponse;
+import com.anonymous.pomodoro_backend.Users.Models.User;
 
 public class ProjectMapper {
     
